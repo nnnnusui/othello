@@ -1,4 +1,4 @@
-package ga.nnnnusui.othello
+package com.github.nnnnusui.othello
 
 import kotlin.math.pow
 
@@ -6,7 +6,7 @@ class OthelloBoard(vararg maxLengths: Int) {
 
     val maxLengths = maxLengths
     val quantityOfAxis = maxLengths.size
-    val board   = Array<Disc>(boardSize(*maxLengths), {Disc("none ")})
+    val board   = Array<Disc>(boardSize(*maxLengths), { Disc("none ") })
     var isGameSet = false
 
     init { println(" maxLengths: ${maxLengths.map { it }.joinToString(",")}") }
@@ -17,9 +17,16 @@ class OthelloBoard(vararg maxLengths: Int) {
         return sum
     }
 
+    fun start() {
+
+    }
+
     fun initDrop(color: String, vararg lengths: Int) {
         board[sum(*lengths)] = Disc(color)
     }
+//    fun drop(color: String, coordinate: ) {
+//        drop(color, *coordinate.coordinates)
+//    }
     fun drop(color: String, vararg lengths: Int): Boolean {
         search(color, *lengths)
         val dropSquare = board[sum(*lengths)]
@@ -117,14 +124,23 @@ class Disc(
     }
 }
 
+class OthelloPlayer(
+    val color: String
+    ){
+
+
+    fun newDisc(): Disc {
+        return Disc(color)
+    }
+}
+
 fun main(args: Array<String>) {
-    val othello = OthelloBoard(3,4,2)
+    val othello = OthelloBoard(3, 4, 2)
 //    othello.initDrop("white", 3, 3)
 //    othello.initDrop("white", 4, 4)
 //    othello.initDrop("black", 3, 4)
 //    othello.initDrop("black", 4, 3)
     othello.initDrop("white", 1, 3, 0)
-
 
     println(othello)
     do {
