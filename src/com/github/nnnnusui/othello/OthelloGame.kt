@@ -2,6 +2,7 @@ package com.github.nnnnusui.othello
 
 import com.github.nnnnusui.anydimensional.Coordinates
 import com.github.nnnnusui.anydimensional.Space
+import java.net.ServerSocket
 import kotlin.math.pow
 
 class OthelloBoard(
@@ -157,10 +158,21 @@ class OthelloGameServer(
     }
 }
 
+class OthelloGameClient {
+
+}
+
 fun main(args: Array<String>) {
+    val boardSize = arrayOf(8, 8)
+    // 接続待ち受け
+    val server = ServerSocket(8080)
+    val socket = server.accept()
+    val input = socket.inputStream
+    val output = socket.outputStream
+    //完了 ゲームスタート
 
     val othello = OthelloGameServer(
-            arrayOf(8, 8)
+            boardSize
            ,arrayOf("white", "black")
            ,{ color, coordinates -> println() }
     )
