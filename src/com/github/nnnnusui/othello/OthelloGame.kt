@@ -5,7 +5,7 @@ import com.github.nnnnusui.anydimensional.Space
 import kotlin.math.pow
 
 class OthelloBoard(
-  val onFlip: () -> Unit
+  val onFlip: (color: String, coordinates: Coordinates) -> Unit
  ,vararg maxLengths: Int
   ){
     val INITIAL_DISC_COLOR = "none "
@@ -17,18 +17,9 @@ class OthelloBoard(
 
     init { println(" maxLengths: ${maxLengths.map { it }.joinToString(",")}") }
 
-    fun boardSize(vararg lengths: Int): Int {
-        var sum = 1
-        lengths.forEach { sum *= it }
-        return sum
-    }
-
-    fun initDrop(color: String, vararg lengths: Int) {
-        initDrop(color, Coordinates(*lengths))
-    }
     fun initDrop(color: String, coordinates: Coordinates) {
         board[coordinates] = Disc(color)
-        onFlip()
+        onFlip(color, coordinates)
     }
     fun drop(color: String, vararg lengths: Int): Boolean {
         return drop(color, Coordinates(*lengths))
@@ -89,7 +80,7 @@ class OthelloBoard(
                                         dirFlagCount += 1
                                     }
                                 board[pos] = Disc(color)
-                                onFlip()
+                                onFlip(color, pos)
                             }
                             break
                         }
@@ -117,56 +108,65 @@ class OthelloBoard(
     }
 }
 class Disc(
-        val color: String
-){
+  val color: String
+  ){
     override fun toString(): String {
         return color
     }
 }
 
 class OthelloPlayer(
-        val color: String
-){
+  val color: String
+  ){
     fun newDisc(): Disc {
         return Disc(color)
     }
 }
 
 class OthelloGameServer(
-  val board: OthelloBoard
+  ints: Array<Int>
  ,colors: Array<String>
- ,val onPrint: (board: OthelloBoard) -> Unit        = { println(board) }
+ ,onFlip: (color: String, coordinates: Coordinates) -> Unit
  ,val onTurn: (player: OthelloPlayer) -> Coordinates = { Coordinates(*readLine()!!.split(",").map { it.toInt()-1 }.toIntArray()) }
 ){
+    val board = OthelloBoard(onFlip, *ints.toIntArray())
     val players = colors.map { OthelloPlayer(it) }.toTypedArray()
 
+    fun initDrop(color: String, vararg lengths: Int) {
+        board.initDrop(color, Coordinates(*lengths))
+    }
     tailrec fun start() {
-        onPrint(board)
+        debugPrintln(board.toString())
         players.forEach { turn(it) }
         if (board.isGameSet) return
-        onPrint(board)
+        debugPrintln(board.toString())
         start()
     }
 
     tailrec fun turn(player: OthelloPlayer) {
-        println("turn: ${player.color}")
+        debugPrintln("turn: ${player.color}")
         val input = onTurn(player)
         val isDropped = board.drop(player.color, input)
-        onPrint(board)
+        debugPrintln(board.toString())
         if (isDropped) return
         turn(player)
+    }
+
+    fun debugPrintln(string: String) {
+        println(string)
     }
 }
 
 fun main(args: Array<String>) {
+
     val othello = OthelloGameServer(
-            OthelloBoard( {}, 8, 8)
+            arrayOf(8, 8)
            ,arrayOf("white", "black")
-           ,{ println(it) }
+           ,{ color, coordinates -> println() }
     )
-    othello.board.initDrop("white", 3, 3)
-    othello.board.initDrop("white", 4, 4)
-    othello.board.initDrop("black", 3, 4)
-    othello.board.initDrop("black", 4, 3)
+    othello.initDrop("white", 3, 3)
+    othello.initDrop("white", 4, 4)
+    othello.initDrop("black", 3, 4)
+    othello.initDrop("black", 4, 3)
     othello.start()
 }
