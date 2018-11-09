@@ -64,7 +64,7 @@ class OthelloBoard(
                             dirFlagCount += 1
                         }
 
-                    try {
+                    if (board.size > board.toOneDimensional(pos)) {
                         val square = board[pos]
                         println("search. ${color}: ${pos().map { it + 1 }.joinToString(",")}")
                         if (square.color == INITIAL_DISC_COLOR) break
@@ -85,10 +85,12 @@ class OthelloBoard(
                             }
                             break
                         }
-                    } catch(e: ArrayIndexOutOfBoundsException) {
+                        moveCount++
+                    } else {
                         println("catch: Edge of board.")
+                        moveCount++
                         break
-                    } finally { moveCount++ }
+                    }
                 } while (true)
             }
         }
@@ -165,10 +167,10 @@ class OthelloGameClient {
 fun main(args: Array<String>) {
     val boardSize = arrayOf(8, 8)
     // 接続待ち受け
-    val server = ServerSocket(8080)
-    val socket = server.accept()
-    val input = socket.inputStream
-    val output = socket.outputStream
+//    val server = ServerSocket(8080)
+//    val socket = server.accept()
+//    val input = socket.inputStream
+//    val output = socket.outputStream
     //完了 ゲームスタート
 
     val othello = OthelloGameServer(
