@@ -8,6 +8,10 @@ class Coordinates(
     val indices = coordinates.indices
     val size    = coordinates.size
 
+
+
+
+
     fun clone(): Coordinates = Coordinates(*coordinates)
 
     operator fun invoke(): IntArray

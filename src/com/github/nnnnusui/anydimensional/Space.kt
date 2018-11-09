@@ -1,7 +1,5 @@
 package com.github.nnnnusui.anydimensional
 
-import kotlin.math.pow
-
 class Space<T>(
     val maxCoordinates: Coordinates
    ,init: (index: Int) -> T
