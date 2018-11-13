@@ -1,115 +1,12 @@
 package com.github.nnnnusui.othello
 
 import com.github.nnnnusui.anydimensional.Coordinates
-import com.github.nnnnusui.anydimensional.Space
-import java.net.ServerSocket
-import kotlin.math.pow
+//import com.github.nnnnusui.server.TcpServer
+//import com.github.nnnnusui.server.WorkerThread
+import java.net.Socket
+import kotlin.concurrent.thread
 
-class OthelloBoard(
-  val onFlip: (color: String, coordinates: Coordinates) -> Unit
- ,vararg maxLengths: Int
-  ){
-    val INITIAL_DISC_COLOR = "none "
-    val maxLengths = maxLengths
-    val quantityOfAxis = maxLengths.size
-    val initDisc = Disc(INITIAL_DISC_COLOR)
-    val board = Space<Disc>(Coordinates(*maxLengths), { initDisc })
-    var isGameSet = false
 
-    init { println(" maxLengths: ${maxLengths.map { it }.joinToString(",")}") }
-
-    fun initDrop(color: String, coordinates: Coordinates) {
-        board[coordinates] = Disc(color)
-        onFlip(color, coordinates)
-    }
-    fun drop(color: String, vararg lengths: Int): Boolean {
-        return drop(color, Coordinates(*lengths))
-    }
-    fun drop(color: String, coordinates: Coordinates): Boolean {
-        search(color, coordinates)
-        val dropSquare = board[coordinates]
-        if (dropSquare.color != color) return false
-        return true
-    }
-    fun search(color: String, coordinates: Coordinates) {
-        val dropSquare = board[coordinates]
-        if (dropSquare.color != INITIAL_DISC_COLOR) return
-
-        val totalDirection = (2F.pow(quantityOfAxis)).toInt() -1
-        for (scanningAxis in totalDirection downTo 1) {
-            val totalDirectionFlags = Integer.toBinaryString(scanningAxis)
-                    .padStart(quantityOfAxis, '0')
-            var quantityOfDirectionFlag = 0
-            totalDirectionFlags.forEach {
-                if (it == '1')
-                    quantityOfDirectionFlag++
-            }
-            println("totalDirectionFlags: ${totalDirectionFlags}")
-
-            val scanningDirection = (2F.pow(quantityOfDirectionFlag)).toInt() - 1
-            for (scanningDirection in scanningDirection downTo 0) { // anyDirectionScan
-                val scanningDirectionFlags = Integer.toBinaryString(scanningDirection)
-                        .padStart(quantityOfDirectionFlag, '0')
-                println("scanningDirectionFlags: ${scanningDirectionFlags}")
-                val pos = coordinates.clone()
-                println("set. ${color}: ${pos().map { it + 1 }.joinToString(",")}")
-                val moveNum = 1
-                var moveCount = 0
-                do {
-                    var dirFlagCount = 0
-                    for (axis in 0..totalDirectionFlags.length - 1)
-                        if (totalDirectionFlags[axis] == '1') {
-                            if (scanningDirectionFlags[dirFlagCount] == '1') pos()[axis] += moveNum
-                            else                                             pos()[axis] -= moveNum
-                            dirFlagCount += 1
-                        }
-
-                    if (board.size > board.toOneDimensional(pos)) {
-                        val square = board[pos]
-                        println("search. ${color}: ${pos().map { it + 1 }.joinToString(",")}")
-                        if (square.color == INITIAL_DISC_COLOR) break
-                        if (square.color == color) { //flip
-                            if (moveCount == 0) break
-                            println("found. ${color}: ${pos().map { it + 1 }.joinToString(",")}")
-
-                            for (i in moveCount downTo 0) {
-                                var dirFlagCount = 0
-                                for (axis in 0..totalDirectionFlags.length - 1)
-                                    if (totalDirectionFlags[axis] == '1') {
-                                        if (scanningDirectionFlags[dirFlagCount] == '1') pos()[axis] -= moveNum
-                                        else                                             pos()[axis] += moveNum
-                                        dirFlagCount += 1
-                                    }
-                                board[pos] = Disc(color)
-                                onFlip(color, pos)
-                            }
-                            break
-                        }
-                        moveCount++
-                    } else {
-                        println("catch: Edge of board.")
-                        moveCount++
-                        break
-                    }
-                } while (true)
-            }
-        }
-    }
-
-    override fun toString(): String {
-        val sBuilder = StringBuilder()
-
-        for (i in board.indices) {
-            sBuilder.append("${board[i]}, ")
-            var mag = 1
-            for (len in maxLengths) {
-                mag *= len
-                if ((i + 1) % mag == 0) sBuilder.append("\n")
-            }
-        }
-        return "${board.size}\n${sBuilder}"
-    }
-}
 class Disc(
   val color: String
   ){
@@ -118,69 +15,175 @@ class Disc(
     }
 }
 
-class OthelloPlayer(
-  val color: String
-  ){
-    fun newDisc(): Disc {
-        return Disc(color)
-    }
-}
+//open class OthelloPlayer(
+//  val color: String
+// ,val socket: Socket
+//  ){
+//    val output = socket.getOutputStream()
+//    val input = socket.getInputStream()
+//    val newLine get() = input.bufferedReader().readLine()
+//
+//    fun requestDropCoord(): Coordinates {
+//        Protocol.TURN.message.forEach { output.write(it.toInt()) }
+//        return Coordinates(*newLine.split(',').map { it.toInt() }.toIntArray())
+//    }
+//    fun noticeFlip(color: String, coordinates: Coordinates) {
+//        "${color}_${coordinates}".forEach { output.write(it.toInt()) }
+//    }
+//    fun newDisc(): Disc {
+//        return Disc(color)
+//    }
+//}
+//class OthelloHost(
+//  color: String
+// ,socket: Socket
+// ,val server: TcpServer
+//  ): OthelloPlayer(color, socket) {
+//
+//    fun waitOrder() {
+//        (readLine()+'\n').forEach { output.write(it.toInt()) }
+////        println(method.message)
+////        hostPlayer.gameStart {
+////        }
+//    }
+//
+//    inline fun gameStart(action: () -> Unit) {
+//        action()
+//    }
+//}
 
-class OthelloGameServer(
-  ints: Array<Int>
- ,colors: Array<String>
- ,onFlip: (color: String, coordinates: Coordinates) -> Unit
- ,val onTurn: (player: OthelloPlayer) -> Coordinates = { Coordinates(*readLine()!!.split(",").map { it.toInt()-1 }.toIntArray()) }
-){
-    val board = OthelloBoard(onFlip, *ints.toIntArray())
-    val players = colors.map { OthelloPlayer(it) }.toTypedArray()
+//class OthelloGameServer(){
+//    val server = TcpServer(8080)
+//    val playerList = mutableListOf<OthelloPlayer>()
+//
+//    fun requestParser(request: String) {
+//        val header = request.substringBefore(':')
+//        val message = request.substringAfter(':')
+//        val order = Protocol.valueOf(header)
+//        when(order) {
+//            Protocol.JOIN_HOST -> { joinHost() }
+//            Protocol.JOIN -> { join() }
+//            Protocol.START -> {  }
+//        }
+//    }
+//    fun joinHost() {
+//        val boardSize = arrayOf(8, 8)
+//        val board = OthelloBoard({ color, coordinates ->
+//            playerList.forEach { it.noticeFlip(color, coordinates) }
+//        }, *boardSize.toIntArray())
+//
+////        board.initDrop("white", 3, 3)
+////        board.initDrop("white", 4, 4)
+////        board.initDrop("black", 3, 4)
+////        board.initDrop("black", 4, 3)
+//
+//    }
+//    fun join() {
+//
+//    }
+//}
 
-    fun initDrop(color: String, vararg lengths: Int) {
-        board.initDrop(color, Coordinates(*lengths))
-    }
-    tailrec fun start() {
-        debugPrintln(board.toString())
-        players.forEach { turn(it) }
-        if (board.isGameSet) return
-        debugPrintln(board.toString())
-        start()
-    }
+/*
+ * Server
+ * Client -> Server [ join(color) ]
+ * HostClient -> Server [ start ]
+ * Server.get(OthelloBoard)
+ * Server -> Client [ board.space ]
+ * loop {
+ *   Server -> Client [ dropRequest ]
+ *   Client -> Server [ drop(coordinates) ]
+ *   Server -> Clients [ flip(color, coordinates) ]
+ * }
+ * Server -> Clients [ gameSet ]
+ * close()
+ */
 
-    tailrec fun turn(player: OthelloPlayer) {
-        debugPrintln("turn: ${player.color}")
-        val input = onTurn(player)
-        val isDropped = board.drop(player.color, input)
-        debugPrintln(board.toString())
-        if (isDropped) return
-        turn(player)
-    }
+//class OthelloGameLoop(
+//  ints: Array<Int>
+// ,val othelloPlayerList: Array<OthelloPlayer>
+//  ){
+//    val board = OthelloBoard({ color, coordinates ->
+//        othelloPlayerList.forEach { it.noticeFlip(color, coordinates) }
+//    }, *ints.toIntArray())
+//
+//    fun initDrop(color: String, vararg lengths: Int) {
+//        board.initDrop(color, Coordinates(*lengths))
+//    }
+//    tailrec fun start() {
+//        debugPrintln(board.toString())
+//        othelloPlayerList.forEach { turn(it) }
+//        debugPrintln(board.toString())
+//        if (board.isGameSet) return
+//        start()
+//    }
+//
+//    tailrec fun turn(player: OthelloPlayer) {
+//        debugPrintln("turn: ${player.color}")
+//        val request = player.requestDropCoord()
+//        val isDropped = board.drop(player.color, request)
+//        debugPrintln(board.toString())
+//        if (isDropped) return
+//
+//        turn(player)
+//    }
+//
+//    fun debugPrintln(string: String) { println(string) }
+//}
 
-    fun debugPrintln(string: String) {
-        println(string)
-    }
-}
 
-class OthelloGameClient {
 
-}
+
+//class OthelloServerWorkerThread: WorkerThread {
+//    override fun run(socket: Socket) {}
+//}
 
 fun main(args: Array<String>) {
+    val port = 8080
     val boardSize = arrayOf(8, 8)
-    // 接続待ち受け
-//    val server = ServerSocket(8080)
-//    val socket = server.accept()
-//    val input = socket.inputStream
-//    val output = socket.outputStream
-    //完了 ゲームスタート
 
-    val othello = OthelloGameServer(
-            boardSize
-           ,arrayOf("white", "black")
-           ,{ color, coordinates -> println() }
-    )
-    othello.initDrop("white", 3, 3)
-    othello.initDrop("white", 4, 4)
-    othello.initDrop("black", 3, 4)
-    othello.initDrop("black", 4, 3)
-    othello.start()
+    val client = OthelloClient("localhost", port)
+    client.run()
+    return
+
+    val playerList = mutableListOf<OthelloPlayer>()
+
+//    val server = TcpServer(port)
+//    thread {
+//        server.start {
+//            val socket = it
+//            val request = socket.getInputStream().bufferedReader().readLine()
+//            val header = request.substringBefore(':')
+//            val method = Protocol.valueOf(header)
+//            val message = request.substringAfter(':')
+//            when (method) {
+//                Protocol.JOIN_HOST -> {
+//                }
+//                Protocol.JOIN -> {
+//                    playerList.add(OthelloPlayer(message, socket))
+//                    playerList.forEach { println("${it.color}") }
+//                }
+//                Protocol.START -> {
+//                    socket.close()
+//                }
+//            }
+//        }
+//    }
+//    val color = "white"
+//    val hostSocket = Socket("localhost", port)
+//    val hostPlayer = OthelloHost(color, hostSocket, server)
+//    playerList.add(hostPlayer)
+//    hostPlayer.waitOrder()
+//    return
+
+
+//    val othello = OthelloGameServer(
+//             boardSize
+//            , playerList.toTypedArray()
+//            , { color, coordinates -> println() }
+//    )
+//    othello.initDrop("white", 3, 3)
+//    othello.initDrop("white", 4, 4)
+//    othello.initDrop("black", 3, 4)
+//    othello.initDrop("black", 4, 3)
+//    othello.start()
 }
