@@ -22,5 +22,14 @@ class CoordinatesTest extends FunSuite {
     val shortCoord = Coordinates(10, 20)
     println(s"short: $shortCoord\t//fill in ${Coordinates.identityElement}")
     println("<=\n")
+
+
+    println("=> calculation example =>")
+    import Coordinates.operator
+    println(s"coord1 + coord1: \n = ${coord1 + coord1}")
+    println(s"coord1 - coord1: \n = ${coord1 - coord1}")
+    println(s"coord1 - shortCoord: \n = ${coord1 - shortCoord}")
+    println(s"Coordinates(2, 4, 8) - Coordinates(1024, -512, 258): \n = ${Coordinates(2, 4, 8) - Coordinates(1024, -512, 258)}")
+    println("<=\n")
   }
 }
