@@ -4,7 +4,9 @@ import com.github.nnnnusui.abstraction.Is
 import com.github.nnnnusui.abstraction.math.Group
 import com.github.nnnnusui.abstraction.math.operation.Operator
 
-case class Coordinates(value: Map[String, Int]) extends Is[Map[String, Int]]
+case class Coordinates(value: Map[String, Int]) extends Is[Map[String, Int]]{
+  override def toString: String = s"${this.getClass.getSimpleName}(${value.mkString(", ")})"
+}
 object Coordinates{
   val identityElement = 0 //Plus.identityElement
   implicit def operator(lhs: Coordinates): Operator[Coordinates, Coordinates] = new Operator[Coordinates, Coordinates](lhs)
@@ -29,7 +31,4 @@ trait CoordinatesIsGroup extends Group[Coordinates, Coordinates]{
                               .toMap
     Coordinates(calculatedMap)
   }
-  // Map.union[Key, Value, M[X, Y] <: Map[X, Y]](
-  //        _1: M[Key, Value], _2: M[Key, Value]
-  //      ): Map[Key, (Option[Value], Option[Value])] ={}
 }
