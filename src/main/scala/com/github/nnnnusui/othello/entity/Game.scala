@@ -1,7 +1,10 @@
 package com.github.nnnnusui.othello.entity
 
-import com.github.nnnnusui.anydimensional.Space
+import com.github.nnnnusui.anydimensional.{Coordinates, Space}
 
 object Game {
-  val board = Space()
+  private val board = Board
+  def put(player: Player, coordinates: Coordinates): Unit ={
+    board.put(player.generateDisc, coordinates)
+  }
 }
