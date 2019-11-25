@@ -2,16 +2,15 @@ package com.github.nnnnusui.anydimensional
 
 import com.github.nnnnusui.abstraction.Is
 
-case class Space(value: Map[Coordinates, Int]) extends Is[Map[Coordinates, Int]]{
+case class Space[A](value: Map[Coordinates, A]) extends Is[Map[Coordinates, A]]{
   override def toString: String = s"${this.getClass.getSimpleName}(${value.mkString(", ")})"
 }
 object Space{
-  implicit def to(that: Space): Map[Coordinates, Int] = that.value
-  implicit def from(value: Map[Coordinates, Int]): Space = Space(value)
+  implicit def to[A](that: Space[A]): Map[Coordinates, A] = that.value
+  implicit def from[A](value: Map[Coordinates, A]): Space[A] = Space(value)
 
-  private val identity = Coordinates.identityElement
-  def apply(dimensions: Coordinates*): Space = {
-    val map = dimensions.map(_ -> identity).toMap
+  def apply[A](dimensions: (Coordinates, A)*): Space[A] = {
+    val map = dimensions.toMap
     new Space(map)
   }
 }
