@@ -14,8 +14,8 @@ object Coordinates{
 
   implicit def to(that: Coordinates): Map[String, Int] = that.value
   implicit def from(value: Map[String, Int]): Coordinates = Coordinates(value)
-  def apply(values: Int*)(implicit keys: Seq[String] = Range(0, values.size).map(_.toString)): Coordinates ={
-    val map = keys.zipWithIndex
+  def apply(values: Int*)(implicit axis: Set[String] = Range(0, values.size).map(_.toString).toSet): Coordinates ={
+    val map = axis.zipWithIndex
       .map{ case(key, index)=> (key, values.lift(index).getOrElse(identityElement))}
       .toMap
     Coordinates(map)
