@@ -1,10 +1,8 @@
 package com.github.nnnnusui.anydimensional
 
 import com.github.nnnnusui.abstraction.Is
-import com.github.nnnnusui.abstraction.math.Group
-import com.github.nnnnusui.abstraction.math.operation.Operator
 
-case class Coordinates[Key, Value](value: Map[Key, Value]) extends Is[Map[Key, Value]]{
+case class Coordinates[Key](value: Map[Key, Int]) extends Is[Map[Key, Int]]{
   override def toString: String = s"${this.getClass.getSimpleName}(${value.mkString(", ")})"
 }
 object Coordinates{
@@ -14,20 +12,21 @@ object Coordinates{
 
 //  implicit def to(that: Coordinates): Map[String, Int] = that.value
 //  implicit def from(value: Map[String, Int]): Coordinates = Coordinates(value)
-//  def apply(values: Int*): Coordinates[Int] ={
-//    val axis: Set[Int] = Range(0, values.size).toSet
-//    val map = axis.zipWithIndex
-//      .map{ case(key, index)=> (key, values.lift(index).getOrElse(identityElement))}
-//      .toMap
-//    Coordinates(map)
-//  }
-  def apply[Key](values: Int*)(implicit axis: Set[Key]): Coordinates[Key, Int] ={
+  def apply[Key](values: Int*)
+                (implicit axis: Set[Key] = (0 to values.size).toSet.asInstanceOf[Set[Key]]): Coordinates[Key] ={
     val map = axis.zipWithIndex
-      .map{ case(key, index)=> (key, values.lift(index).getOrElse(identityElement))}
-      .toMap
+                  .map{ case(key, index)=> (key, values.lift(index).getOrElse(identityElement))}
+                  .toMap
     new Coordinates(map)
   }
 }
+
+//object Axis{
+//  def apply(set: Set[Int]): Axis[Int] = {
+//    Axis(set.zipWithIndex.toMap)
+//  }
+//}
+//case class Axis[A](value: Map[Int, A]) extends Is[Map[Int, A]]
 //trait CoordinatesIsGroup extends Group[Coordinates, Coordinates]{
 //  override def plus(_1: Coordinates, _2: Coordinates): Coordinates  = operationResult(_1, _2, (_1, _2)=> _1 + _2)
 //  override def minus(_1: Coordinates, _2: Coordinates): Coordinates = operationResult(_1, _2, (_1, _2)=> _1 - _2)
