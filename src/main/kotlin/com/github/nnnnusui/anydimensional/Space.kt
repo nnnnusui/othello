@@ -71,7 +71,7 @@ class Space<T>(
             maxCoordinates().reduce { acc, i ->
                 if ((index) % acc == 0) {
                     str = "\t${disc}"
-                    if (index == 0) return@reduce 0
+                    if (index == 0) return@reduce acc
                     else            sBuilder.appendln()
                 }
                 acc * i

@@ -2,6 +2,8 @@ package com.github.nnnnusui.othello
 
 import com.github.nnnnusui.anydimensional.Coordinates
 import com.github.nnnnusui.anydimensional.Space
+import java.lang.Exception
+import java.util.*
 
 class OthelloBoard(
         maxLengths: IntArray
@@ -58,8 +60,16 @@ class OthelloBoard(
 
 class OthelloPlayer(val color: String) {
 
-    fun requestCoord(): Coordinates {
-        return Coordinates(*readLine()!!.split(',').map { it.toInt()-1 }.toIntArray())
+    fun tryRequestCoordinates(dimension: Int): Optional<Coordinates> {
+        return try {
+            val coordinates = Coordinates(*readLine()!!.split(',').map { it.toInt()-1 }.reversed().toIntArray())
+            if (coordinates.dimension != dimension)
+                Optional.empty()
+            else
+                Optional.of(coordinates)
+        } catch (e: Exception) {
+            Optional.empty()
+        }
     }
 }
 
@@ -75,23 +85,32 @@ class OthelloGameLoop(val board: OthelloBoard, val playerArray: Array<OthelloPla
         start()
     }
     tailrec fun turn(player: OthelloPlayer) {
-            println("turn: ${player.color}")
-        val requestCoord = player.requestCoord()
-        val isDropped = board.drop(player.color, requestCoord)
-            println(board)
+        println("turn: ${player.color}")
+        val optCoord = player.tryRequestCoordinates(board.board.dimension)
+        val isDropped =
+            if (optCoord.isPresent)
+                board.drop(player.color, optCoord.get())
+            else false
         if (isDropped) return
+        println("drop failure. try again.")
         turn(player)
     }
 }
 
 fun main(args: Array<String>) {
+    val white = "white"
+    val black = "black"
+    val board = OthelloBoard(arrayOf(4, 4, 4).toIntArray(), {str, coord -> })
+    val othello = OthelloGameLoop(board, arrayOf(OthelloPlayer(white), OthelloPlayer(black)))
+    othello.initDrop(black, 2, 2, 2)
+    othello.initDrop(black, 3, 3, 2)
+    othello.initDrop(white, 2, 3, 2)
+    othello.initDrop(white, 3, 2, 2)
 
-    val board = OthelloBoard(arrayOf(8, 8).toIntArray(), {str, coord -> })
-    val othello = OthelloGameLoop(board, arrayOf(OthelloPlayer("white"), OthelloPlayer("black")))
-    othello.initDrop("white", 4, 4)
-    othello.initDrop("white", 5, 5)
-    othello.initDrop("black", 4, 5)
-    othello.initDrop("black", 5, 4)
+    othello.initDrop(white, 2, 2, 3)
+    othello.initDrop(white, 3, 3, 3)
+    othello.initDrop(black, 2, 3, 3)
+    othello.initDrop(black, 3, 2, 3)
     othello.start()
 }
 fun getCoord(vararg ints: Int): Coordinates
