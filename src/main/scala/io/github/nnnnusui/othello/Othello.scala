@@ -5,6 +5,12 @@ object Othello:
     new Othello(board, LazyList.continually(players).flatten, false)
 
   type Color = Char
+//  type Coordinates = Seq[Int]
+//  extension (it: Coordinates)
+//    def +(rhs: Coordinates): Coordinates =
+//      it.zipAll(rhs, 0, 0).map(_ + _)
+//  object Coordinates:
+//    def apply(values: Int*): Coordinates = values.toSeq
   object Coordinates:
     def fromSeq(values: Seq[Int]): Option[Coordinates] =
       if values.length < 2 then return Option.empty
@@ -20,9 +26,9 @@ object Othello:
 
   object Board:
     def initializedFromExpandLength(expandLength: Int): Board =
-      val length = expandLength * 2 + 2
-      val (x, y) = (length, length)
-      val empty  = Board(Seq.fill(x)(Seq.fill(y)('_')))
+      val length      = expandLength * 2 + 2
+      val coordinates = Coordinates(length, length)
+      val empty       = Board(space = Map.empty, upperBounds = coordinates)
 
       val half = length / 2
       empty
@@ -31,15 +37,15 @@ object Othello:
         .updated('B', Coordinates(half, half - 1))
         .updated('W', Coordinates(half, half))
 
-  case class Board(space: Seq[Seq[Color]]):
-    val dimension = 2
+  case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinates):
+    val dimension   = 2
+    val length: Int = upperBounds.y * upperBounds.x
     def apply(coordinates: Coordinates): Color =
-      val Coordinates(x, y) = coordinates
-      space(y)(x)
+      space.getOrElse(coordinates, '_')
     def updated(color: Color, coordinates: Coordinates): Board =
       if !isIncluding(coordinates) then return this
       val Coordinates(x, y) = coordinates
-      Board(space.updated(y, space(y).updated(x, color)))
+      copy(space = space.updated(coordinates, color))
     //  def dropped(color: Color, coordinates: Coordinates): Board =
     //    droppedOption(color, coordinates).getOrElse(this)
     def droppedOption(color: Color, coordinates: Coordinates): Option[Board] =
@@ -74,7 +80,7 @@ object Othello:
 
     def isIncluding(coordinates: Coordinates): Boolean =
       val Coordinates(x, y) = coordinates
-      space.length > x && x >= 0 && space(x).length > y && y >= 0
+      upperBounds.x > x && x >= 0 && upperBounds.y > y && y >= 0
     def directionList: Seq[Coordinates] =
       Seq
         .fill(dimension)(Seq(0, 1, -1))
@@ -89,12 +95,20 @@ object Othello:
 
     def toSeq: Seq[(Color, Coordinates)] =
       for
-        (row, y)   <- space.zipWithIndex
-        (color, x) <- row.zipWithIndex
-      yield (color, Coordinates(x, y))
+        y <- Range(0, upperBounds.y)
+        x <- Range(0, upperBounds.x)
+        coordinates = Coordinates(x, y)
+        color       = this.apply(coordinates)
+      yield (color, coordinates)
     override def toString: String =
+      val colors =
+        toSeq
+          .map(_._1)
+          .grouped(upperBounds.x)
+          .map(_.mkString(", "))
+          .mkString("\n")
       s"""Board(
-         |  ${space.map(_.mkString(", ")).mkString("\n").indent(2).trim}
+         |  ${colors.indent(2).trim}
          |)""".stripMargin
 
 import Othello.*
