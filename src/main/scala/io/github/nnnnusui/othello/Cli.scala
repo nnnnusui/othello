@@ -5,9 +5,9 @@ import scala.io.StdIn
 
 trait Cli extends App:
   import Othello.*
-  val max           = 8
-  val board         = Board.initializedFromLength(max)
-  val game: Othello = Othello(board, players = Seq('W', 'B').map(Player.apply))
+  val boardExpandLength = 3
+  val board             = Board.initializedFromExpandLength(boardExpandLength)
+  val game: Othello     = Othello(board, players = Seq('W', 'B').map(Player.apply))
   run(game)
 
   def run(game: Othello): Unit =

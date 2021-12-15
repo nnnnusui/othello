@@ -19,7 +19,8 @@ object Othello:
     case object Pass                          extends Action
 
   object Board:
-    def initializedFromLength(length: Int): Board =
+    def initializedFromExpandLength(expandLength: Int): Board =
+      val length = expandLength * 2 + 2
       val (x, y) = (length, length)
       val empty  = Board(Seq.fill(x)(Seq.fill(y)('_')))
 
