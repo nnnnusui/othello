@@ -4,19 +4,14 @@ object Othello:
   def apply(board: Board, players: Seq[Player]) =
     new Othello(board, LazyList.continually(players).flatten, false)
 
-  type Color = Char
-//  type Coordinates = Seq[Int]
-//  extension (it: Coordinates)
-//    def +(rhs: Coordinates): Coordinates =
-//      it.zipAll(rhs, 0, 0).map(_ + _)
-//  object Coordinates:
-//    def apply(values: Int*): Coordinates = values.toSeq
+  type Color       = Char
+  type Coordinates = Seq[Int]
+  type Move        = (Coordinates, Color)
+  extension (it: Coordinates)
+    def +(rhs: Coordinates): Coordinates =
+      it.zipAll(rhs, 0, 0).map(_ + _)
   object Coordinates:
-    def fromSeq(values: Seq[Int]): Option[Coordinates] =
-      if values.length < 2 then return Option.empty
-      Some(Coordinates(values.head, values(1)))
-  case class Coordinates(x: Int, y: Int):
-    def +(rhs: Coordinates): Coordinates = Coordinates(x + rhs.x, y + rhs.y)
+    def apply(values: Int*): Coordinates = values.toSeq
 
   case class Player(color: Color)
   sealed trait Action
@@ -39,7 +34,7 @@ object Othello:
 
   case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinates):
     val dimension   = 2
-    val length: Int = upperBounds.y * upperBounds.x
+    val length: Int = upperBounds.product
     def apply(coordinates: Coordinates): Color =
       space.getOrElse(coordinates, '_')
     def updated(color: Color, coordinates: Coordinates): Board =
@@ -79,8 +74,7 @@ object Othello:
       replaceTargets :+ coordinates
 
     def isIncluding(coordinates: Coordinates): Boolean =
-      val Coordinates(x, y) = coordinates
-      upperBounds.x > x && x >= 0 && upperBounds.y > y && y >= 0
+      upperBounds.zip(coordinates).forall(_ > _)
     def directionList: Seq[Coordinates] =
       Seq
         .fill(dimension)(Seq(0, 1, -1))
@@ -91,24 +85,24 @@ object Othello:
           yield upper :+ current
         }
         .drop(1) // remove [0, 0, ..., 0]
-        .map(it => Coordinates.fromSeq(it).get)
 
-    def toSeq: Seq[(Color, Coordinates)] =
-      for
-        y <- Range(0, upperBounds.y)
-        x <- Range(0, upperBounds.x)
-        coordinates = Coordinates(x, y)
-        color       = this.apply(coordinates)
-      yield (color, coordinates)
+    def toSeq: Seq[Move] =
+      upperBounds
+        .foldLeft(Seq(Seq.empty[Int])) { (sum, it) =>
+          for
+            upper   <- sum
+            current <- Range(0, it)
+          yield upper :+ current
+        }
+        .map(it => (it, space.getOrElse(it, '_')))
     override def toString: String =
+      val headResult =
+        toSeq.map(_._2.toString).grouped(upperBounds.head).toSeq.map(_.mkString(", "))
       val colors =
-        toSeq
-          .map(_._1)
-          .grouped(upperBounds.x)
-          .map(_.mkString(", "))
-          .mkString("\n")
+        upperBounds.tail
+          .foldLeft(headResult)((sum, it) => sum.grouped(it).toSeq.map(_.mkString(",\n")))
       s"""Board(
-         |  ${colors.indent(2).trim}
+         |  ${colors.mkString("\n").indent(2).trim}
          |)""".stripMargin
 
 import Othello.*
@@ -139,7 +133,7 @@ class Othello private (
     )
   private def dropDiscMoves =
     for
-      (_, coordinates) <- board.toSeq.to(LazyList)
+      (coordinates, _) <- board.toSeq.to(LazyList)
       dropped          <- board.droppedOption(player.color, coordinates)
     yield (
       Action.Drop(coordinates),
