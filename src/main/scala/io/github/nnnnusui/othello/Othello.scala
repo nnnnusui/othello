@@ -20,8 +20,7 @@ object Othello:
     case object Pass                          extends Action
 
   object Board:
-    def initializedFromExpandLength(expandLengths: Coordinates): Board =
-      val colors      = Seq('W', 'B')
+    def initializedFromExpandLength(expandLengths: Coordinates, colors: Seq[Color]): Board =
       val upperBounds = expandLengths.map(_ * 2 + colors.length)
       val dimension   = expandLengths.length
       val empty       = Board(space = Map.empty, upperBounds)
