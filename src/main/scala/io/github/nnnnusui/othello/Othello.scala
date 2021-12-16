@@ -20,26 +20,40 @@ object Othello:
     case object Pass                          extends Action
 
   object Board:
-    def initializedFromExpandLength(expandLength: Int): Board =
-      val length      = expandLength * 2 + 2
-      val coordinates = Coordinates(length, length)
-      val empty       = Board(space = Map.empty, upperBounds = coordinates)
+    def initializedFromExpandLength(expandLengths: Coordinates): Board =
+      val colors      = Seq('W', 'B')
+      val upperBounds = expandLengths.map(_ * 2 + colors.length)
+      val dimension   = expandLengths.length
+      val empty       = Board(space = Map.empty, upperBounds)
 
-      val half = length / 2
-      empty
-        .updated('W', Coordinates(half - 1, half - 1))
-        .updated('B', Coordinates(half - 1, half))
-        .updated('B', Coordinates(half, half - 1))
-        .updated('W', Coordinates(half, half))
+      val colorStream = LazyList
+        .continually(colors)
+        .flatten
+        .sliding(colors.length)
+        .flatten
+      val initPlaceCoordinates =
+        Seq
+          .fill(dimension)(colors.indices)
+          .foldLeft(Seq(Seq.empty[Int])) { (sum, it) =>
+            for
+              upper   <- sum
+              current <- it
+            yield current +: upper
+          }
+          .map(_ + expandLengths)
+      initPlaceCoordinates
+        .zip(colorStream)
+        .foldLeft(empty) { case (board, (coordinates, color)) =>
+          board.updated(color, coordinates)
+        }
 
   case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinates):
-    val dimension   = 2
-    val length: Int = upperBounds.product
+    val dimension: Int = upperBounds.length
+    val length: Int    = upperBounds.product
     def apply(coordinates: Coordinates): Color =
       space.getOrElse(coordinates, '_')
     def updated(color: Color, coordinates: Coordinates): Board =
       if !isIncluding(coordinates) then return this
-      val Coordinates(x, y) = coordinates
       copy(space = space.updated(coordinates, color))
     //  def dropped(color: Color, coordinates: Coordinates): Board =
     //    droppedOption(color, coordinates).getOrElse(this)
@@ -90,17 +104,22 @@ object Othello:
       upperBounds
         .foldLeft(Seq(Seq.empty[Int])) { (sum, it) =>
           for
-            upper   <- sum
-            current <- Range(0, it)
-          yield upper :+ current
+            current <- Range(0, it) // The lower axis has higher iteration priority
+            higherAxis <- sum
+          yield higherAxis :+ current
         }
         .map(it => (it, space.getOrElse(it, '_')))
     override def toString: String =
-      val headResult =
-        toSeq.map(_._2.toString).grouped(upperBounds.head).toSeq.map(_.mkString(", "))
       val colors =
-        upperBounds.tail
-          .foldLeft(headResult)((sum, it) => sum.grouped(it).toSeq.map(_.mkString(",\n")))
+        upperBounds.zipWithIndex
+          .foldLeft(toSeq.map(_._2.toString)) { case (sum, (it, index)) =>
+            sum.grouped(it).toSeq.map { it =>
+              index match
+                case 0 => it.mkString(", ")
+                case 1 => it.mkString(",\n")
+                case _ => it.map(it => s"  ${it.indent(2).trim}").mkString("(\n", "\n),(\n", "\n)")
+            }
+          }
       s"""Board(
          |  ${colors.mkString("\n").indent(2).trim}
          |)""".stripMargin
@@ -150,7 +169,7 @@ class Othello private (
         .map((it, index) => s"$index: $it")
         .mkString(",\n")
     s"""${this.getClass.getSimpleName}(
-       |  ${board.toString.indent(2).trim}
+       |  ${board.toString.indent(2).trim},
        |  $player,
        |  Actions(
        |    ${actions.indent(4).trim}
