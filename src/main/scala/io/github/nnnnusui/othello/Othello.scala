@@ -25,26 +25,30 @@ object Othello:
       val dimension   = expandLengths.length
       val empty       = Board(space = Map.empty, upperBounds)
 
-      val colorStream = LazyList
-        .continually(colors)
-        .flatten
-        .sliding(colors.length)
-        .flatten
-      val initPlaceCoordinates =
+      val colorStream =
         Seq
-          .fill(dimension)(colors.indices)
-          .foldLeft(Seq(Seq.empty[Int])) { (sum, it) =>
-            for
-              upper   <- sum
-              current <- it
-            yield current +: upper
+          .fill(dimension)(colors.length)
+          .scanLeft((1, 1)) { case ((before, _), it) => (before * it, before) }
+          .foldLeft(LazyList.continually(colors).flatten) { case (stream, (it, before)) =>
+            LazyList.continually(stream.sliding(it, before).flatten).flatten
           }
-          .map(_ + expandLengths)
-      initPlaceCoordinates
+      Seq
+        .fill(dimension)(colors.indices)
+        .foldLeft(Seq(Seq.empty[Int])) { case (sum, it) =>
+          for
+            upper   <- sum
+            current <- it
+          yield current +: upper
+        }
+        .map(_ + expandLengths) // init place coordinates
         .zip(colorStream)
+        .map { it =>
+          println(it)
+          it
+        }
         .foldLeft(empty) { case (board, (coordinates, color)) =>
           board.updated(color, coordinates)
-        }
+        } // initialized board
 
   case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinates):
     val dimension: Int = upperBounds.length
