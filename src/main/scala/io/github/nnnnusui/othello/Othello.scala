@@ -2,7 +2,7 @@ package io.github.nnnnusui.othello
 
 object Othello:
   def apply(board: Board, players: Seq[Player]) =
-    new Othello(board, LazyList.continually(players).flatten, Option.empty)
+    new Othello(board, LazyList.continually(players).flatten, Option.empty, players)
 
   type Color       = Char
   type Coordinates = Seq[Int]
@@ -128,6 +128,7 @@ class Othello private (
     val board: Board,
     val playerTurnStream: LazyList[Player],
     playerStartedThisLapPass: Option[Player],
+    players: Seq[Player],
 ):
   val player: Player                     = playerTurnStream.head
   val nextPlayerStream: LazyList[Player] = playerTurnStream.drop(1)
@@ -135,7 +136,11 @@ class Othello private (
   lazy val isEnd: Boolean                = moves.keys.toSeq.isEmpty
   private val passedAround: Boolean      = playerStartedThisLapPass.contains(player)
 
-  type Self = Othello
+  lazy val counts: Map[Player, Int] =
+    val grouped: Map[Color, Int] =
+      board.toSeq.groupMap(_._2)(_._1).map((key, value) => (key, value.length))
+    players.map(it => (it, grouped.getOrElse(it.color, 0))).toMap
+
   type Move = (Action, Othello)
   private def complementPassingMove(moves: Seq[Move]): Seq[Move] =
     if moves.nonEmpty then return moves
@@ -147,6 +152,7 @@ class Othello private (
           board,
           nextPlayerStream,
           Option(playerStartedThisLapPass.getOrElse(player)),
+          players,
         ),
       ),
     )
@@ -160,6 +166,7 @@ class Othello private (
         dropped,
         nextPlayerStream,
         Option.empty,
+        players,
       ),
     )
 

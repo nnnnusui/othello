@@ -21,9 +21,11 @@ trait Cli extends App:
   val board         = Board.initializedFromExpandLength(boardExpandLengths, colors)
   val game: Othello = Othello(board, players = colors.map(Player.apply))
   println("> game start.")
-  run(game)
+  val result = run(game)
+  println("RESULT:")
+  result.counts foreach { (player, value) => println(s"  $player -> DiscCount: $value") }
 
-  def run(game: Othello): Unit =
+  def run(game: Othello): Othello =
     LazyList
       .continually(true)
       .scanLeft(game) { (game, _) =>
