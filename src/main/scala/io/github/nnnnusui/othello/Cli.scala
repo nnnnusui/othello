@@ -14,11 +14,11 @@ trait Cli extends App:
       |    ${Seq("3", "1", "END").mkString("\n").indent(4).trim}
       |  \"\"\"
       |  ->
-      |    ${Othello(Seq(3, 1), Seq('W', 'B').map(Player.apply)).toString.indent(4).trim}
+      |    ${Othello(Seq(3, 1), Set('W', 'B').map(Player.apply)).toString.indent(4).trim}
       |""".stripMargin)
   val boardExpandLengths = coordinatesFromStdIn()
   println("> plz input `colors`. (write some letters on the line)")
-  val colors        = StdIn.readLine().toCharArray.toSeq
+  val colors        = StdIn.readLine().toCharArray.toSet
   val game: Othello = Othello(boardExpandLengths, players = colors.map(Player.apply))
   println("> game start.")
   val result = run(game)

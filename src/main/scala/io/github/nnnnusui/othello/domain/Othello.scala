@@ -1,19 +1,19 @@
 package io.github.nnnnusui.othello.domain
 
 object Othello:
-  def apply(boardExpandLengths: Coordinates, players: Seq[Player]) =
+  def apply(boardExpandLengths: Coordinates, players: Set[Player]) =
     new Othello(
-      Board.initializedFromExpandLength(boardExpandLengths, players.map(_.color)),
+      Board.initializedFromExpandLength(boardExpandLengths, players),
       LazyList.continually(players).flatten,
       Option.empty,
       players,
     )
 
 class Othello private (
-    val board: Board[Color],
+    val board: Board[Player],
     val playerTurnStream: LazyList[Player],
     playerStartedThisLapPass: Option[Player],
-    players: Seq[Player],
+    players: Set[Player],
 ):
   val player: Player                     = playerTurnStream.head
   val nextPlayerStream: LazyList[Player] = playerTurnStream.drop(1)
@@ -22,10 +22,9 @@ class Othello private (
   private val passedAround: Boolean      = playerStartedThisLapPass.contains(player)
 
   lazy val counts: Map[Player, Int] =
-    val grouped: Map[Color, Int] =
-      board.grouped
-        .map((key, value) => (key, value.length))
-    players.map(it => (it, grouped.getOrElse(it.color, 0))).toMap
+    val grouped =
+      board.grouped.map((key, value) => (key, value.length))
+    players.map(it => (it, grouped.getOrElse(it, 0))).toMap
 
   type Move = (Action, Othello)
   private def complementPassingMove(moves: Seq[Move]): Seq[Move] =
@@ -45,7 +44,7 @@ class Othello private (
   private def dropDiscMoves =
     for
       (coordinates, _) <- board.toSeq.to(LazyList)
-      dropped          <- board.droppedOption(player.color, coordinates)
+      dropped          <- board.droppedOption(player, coordinates)
     yield (
       Action.Drop(coordinates),
       new Othello(

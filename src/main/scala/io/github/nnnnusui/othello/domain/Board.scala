@@ -3,21 +3,21 @@ package io.github.nnnnusui.othello.domain
 object Board:
   def initializedFromExpandLength[Disc](
       expandLengths: Coordinates,
-      discKinds: Seq[Disc],
+      discKinds: Set[Disc],
   ): Board[Disc] =
-    val upperBounds = expandLengths.map(_ * 2 + discKinds.length)
+    val upperBounds = expandLengths.map(_ * 2 + discKinds.size)
     val dimension   = expandLengths.length
     val empty       = Board[Disc](space = Map.empty, upperBounds)
 
     val discStream =
       Seq
-        .fill(dimension)(discKinds.length)
+        .fill(dimension)(discKinds.size)
         .scanLeft((1, 1)) { case ((before, _), it) => (before * it, before) }
         .foldLeft(LazyList.continually(discKinds).flatten) { case (stream, (it, before)) =>
           LazyList.continually(stream.sliding(it, before).flatten).flatten
         }
     Seq
-      .fill(dimension)(discKinds.indices)
+      .fill(dimension)(Range(0, discKinds.size))
       .foldLeft(Seq(Seq.empty[Int])) { case (sum, it) =>
         for
           upper   <- sum
