@@ -29,7 +29,7 @@ class Othello[Disc] private (
 
   lazy val counts: Map[Disc, Int] =
     val grouped =
-      board.grouped.map((key, value) => (key, value.length))
+      board.grouped.map((key, value) => (key, value.size))
     discKinds.map(it => (it, grouped.getOrElse(it, 0))).toMap
 
   type Move = (Action, Othello[Disc])

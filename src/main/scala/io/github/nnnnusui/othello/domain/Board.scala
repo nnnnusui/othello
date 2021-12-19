@@ -16,20 +16,10 @@ object Board:
         .foldLeft(LazyList.continually(discKinds).flatten) { case (stream, (it, before)) =>
           LazyList.continually(stream.sliding(it, before).flatten).flatten
         }
-    Seq
-      .fill(dimension)(Range(0, discKinds.size))
-      .foldLeft(Seq(Seq.empty[Int])) { case (sum, it) =>
-        for
-          upper   <- sum
-          current <- it
-        yield current +: upper
-      }
+    Coordinates
+      .manyByProduction(Seq.fill(dimension)(Range(0, discKinds.size)))
       .map(_ + expandLengths) // init place coordinates
       .zip(discStream)
-      .map { it =>
-        println(it)
-        it
-      }
       .foldLeft(empty) { case (board, (coordinates, disc)) =>
         board.updated(disc, coordinates)
       } // initialized board
@@ -42,8 +32,6 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
   def updated(disc: Disc, coordinates: Coordinates): Board[Disc] =
     if !isIncluding(coordinates) then return this
     copy(space = space.updated(coordinates, disc))
-  //  def dropped(color: Color, coordinates: Coordinates): Board =
-  //    droppedOption(color, coordinates).getOrElse(this)
   def droppedOption(disc: Disc, coordinates: Coordinates): Option[Board[Disc]] =
     val replaceTargets = replaceTargetsOnDrop(disc, coordinates)
     if replaceTargets.isEmpty then return Option.empty
@@ -72,30 +60,11 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
     if replaceTargets.isEmpty then return Seq.empty
     replaceTargets :+ coordinates
 
-  def isIncluding(coordinates: Coordinates): Boolean =
-    upperBounds.zip(coordinates).forall(_ > _)
-  def directionList: Seq[Coordinates] =
-    Seq
-      .fill(dimension)(Seq(0, 1, -1))
-      .foldLeft(Seq(Seq.empty[Int])) { (sum, it) =>
-        for
-          upper   <- sum
-          current <- it
-        yield upper :+ current
-      }
-      .drop(1) // remove [0, 0, ..., 0]
-
   def toSeq: Seq[(Coordinates, Option[Disc])] =
-    upperBounds
-      .foldLeft(Seq(Seq.empty[Int])) { (sum, it) =>
-        for
-          current <- Range(0, it) // The lower axis has higher iteration priority
-          higherAxis <- sum
-        yield higherAxis :+ current
-      }
+    Coordinates
+      .manyByProduction(upperBounds.map(Range(0, _)))
       .map(it => (it, space.get(it)))
-  def grouped: Map[Disc, Seq[Coordinates]] =
-    toSeq.collect { case (k, Some(v)) => k -> v }.groupMap(_._2)(_._1)
+  def grouped: Map[Disc, Iterable[Coordinates]] = space.groupMap(_._2)(_._1)
 
   override def toString: String =
     val discs = toSeq
@@ -118,3 +87,11 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
     s"""Board(
        |  ${colors.mkString("\n").indent(2).trim}
        |)""".stripMargin
+
+  // space's methods
+  def isIncluding(coordinates: Coordinates): Boolean =
+    upperBounds.zip(coordinates).forall(_ > _)
+  def directionList: Seq[Coordinates] =
+    Coordinates
+      .manyByProduction(Seq.fill(dimension)(Seq(0, 1, -1)))
+      .drop(1) // remove [0, 0, ..., 0]
