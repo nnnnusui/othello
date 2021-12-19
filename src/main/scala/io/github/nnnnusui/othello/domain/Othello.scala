@@ -10,7 +10,7 @@ object Othello:
     )
 
 class Othello private (
-    val board: Board,
+    val board: Board[Color],
     val playerTurnStream: LazyList[Player],
     playerStartedThisLapPass: Option[Player],
     players: Seq[Player],
@@ -23,7 +23,8 @@ class Othello private (
 
   lazy val counts: Map[Player, Int] =
     val grouped: Map[Color, Int] =
-      board.toSeq.groupMap(_._2)(_._1).map((key, value) => (key, value.length))
+      board.grouped
+        .map((key, value) => (key, value.length))
     players.map(it => (it, grouped.getOrElse(it.color, 0))).toMap
 
   type Move = (Action, Othello)

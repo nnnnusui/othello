@@ -1,20 +1,23 @@
 package io.github.nnnnusui.othello.domain
 
 object Board:
-  def initializedFromExpandLength(expandLengths: Coordinates, colors: Seq[Color]): Board =
-    val upperBounds = expandLengths.map(_ * 2 + colors.length)
+  def initializedFromExpandLength[Disc](
+      expandLengths: Coordinates,
+      discKinds: Seq[Disc],
+  ): Board[Disc] =
+    val upperBounds = expandLengths.map(_ * 2 + discKinds.length)
     val dimension   = expandLengths.length
-    val empty       = Board(space = Map.empty, upperBounds)
+    val empty       = Board[Disc](space = Map.empty, upperBounds)
 
-    val colorStream =
+    val discStream =
       Seq
-        .fill(dimension)(colors.length)
+        .fill(dimension)(discKinds.length)
         .scanLeft((1, 1)) { case ((before, _), it) => (before * it, before) }
-        .foldLeft(LazyList.continually(colors).flatten) { case (stream, (it, before)) =>
+        .foldLeft(LazyList.continually(discKinds).flatten) { case (stream, (it, before)) =>
           LazyList.continually(stream.sliding(it, before).flatten).flatten
         }
     Seq
-      .fill(dimension)(colors.indices)
+      .fill(dimension)(discKinds.indices)
       .foldLeft(Seq(Seq.empty[Int])) { case (sum, it) =>
         for
           upper   <- sum
@@ -22,35 +25,35 @@ object Board:
         yield current +: upper
       }
       .map(_ + expandLengths) // init place coordinates
-      .zip(colorStream)
+      .zip(discStream)
       .map { it =>
         println(it)
         it
       }
-      .foldLeft(empty) { case (board, (coordinates, color)) =>
-        board.updated(color, coordinates)
+      .foldLeft(empty) { case (board, (coordinates, disc)) =>
+        board.updated(disc, coordinates)
       } // initialized board
 
-case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinates):
+case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coordinates):
   val dimension: Int = upperBounds.length
   val length: Int    = upperBounds.product
-  def apply(coordinates: Coordinates): Color =
-    space.getOrElse(coordinates, '_')
-  def updated(color: Color, coordinates: Coordinates): Board =
+  def apply(coordinates: Coordinates): Option[Disc] =
+    space.get(coordinates)
+  def updated(disc: Disc, coordinates: Coordinates): Board[Disc] =
     if !isIncluding(coordinates) then return this
-    copy(space = space.updated(coordinates, color))
+    copy(space = space.updated(coordinates, disc))
   //  def dropped(color: Color, coordinates: Coordinates): Board =
   //    droppedOption(color, coordinates).getOrElse(this)
-  def droppedOption(color: Color, coordinates: Coordinates): Option[Board] =
-    val replaceTargets = replaceTargetsOnDrop(color, coordinates)
+  def droppedOption(disc: Disc, coordinates: Coordinates): Option[Board[Disc]] =
+    val replaceTargets = replaceTargetsOnDrop(disc, coordinates)
     if replaceTargets.isEmpty then return Option.empty
     Some(
       replaceTargets
-        .foldLeft(this) { (board, it) => board.updated(color, it) },
+        .foldLeft(this) { (board, it) => board.updated(disc, it) },
     )
-  def replaceTargetsOnDrop(color: Color, coordinates: Coordinates): Seq[Coordinates] =
+  def replaceTargetsOnDrop(disc: Disc, coordinates: Coordinates): Seq[Coordinates] =
     if !isIncluding(coordinates) then return Seq.empty
-    if apply(coordinates) != '_' then return Seq.empty
+    if apply(coordinates).isEmpty then return Seq.empty
     val replaceTargets =
       (
         for direction <- directionList
@@ -61,11 +64,9 @@ case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinat
           ): Seq[Coordinates] =
             if !isIncluding(current) then return Seq.empty
             this.apply(current) match
-              case '_' => Seq.empty
-              case it if it == color =>
-                result
-              case _ =>
-                scanning(current + direction, result :+ current)
+              case None             => Seq.empty
+              case it if it == disc => result
+              case _                => scanning(current + direction, result :+ current)
           scanning(coordinates + direction, Seq())
       ).flatten
     if replaceTargets.isEmpty then return Seq.empty
@@ -84,7 +85,7 @@ case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinat
       }
       .drop(1) // remove [0, 0, ..., 0]
 
-  def toSeq: Seq[(Coordinates, Color)] =
+  def toSeq: Seq[(Coordinates, Option[Disc])] =
     upperBounds
       .foldLeft(Seq(Seq.empty[Int])) { (sum, it) =>
         for
@@ -92,11 +93,21 @@ case class Board private (space: Map[Coordinates, Color], upperBounds: Coordinat
           higherAxis <- sum
         yield higherAxis :+ current
       }
-      .map(it => (it, space.getOrElse(it, '_')))
+      .map(it => (it, space.get(it)))
+  def grouped: Map[Disc, Seq[Coordinates]] =
+    toSeq.collect { case (k, Some(v)) => k -> v }.groupMap(_._2)(_._1)
+
   override def toString: String =
+    val discs = toSeq
+      .map(_._2)
+      .map {
+        case Some(value) => value.toString.head
+        case None        => '_'
+      }
+      .map(_.toString)
     val colors =
       upperBounds.zipWithIndex
-        .foldLeft(toSeq.map(_._2.toString)) { case (sum, (it, index)) =>
+        .foldLeft(discs) { case (sum, (it, index)) =>
           sum.grouped(it).toSeq.map { it =>
             index match
               case 0 => it.mkString(", ")
