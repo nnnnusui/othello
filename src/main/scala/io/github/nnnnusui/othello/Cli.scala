@@ -18,8 +18,7 @@ trait Cli extends App:
   val boardExpandLengths = coordinatesFromStdIn()
   println("> plz input `colors`. (write some letters on the line)")
   val colors        = StdIn.readLine().toCharArray.toSeq
-  val board         = Board.initializedFromExpandLength(boardExpandLengths, colors)
-  val game: Othello = Othello(board, players = colors.map(Player.apply))
+  val game: Othello = Othello(boardExpandLengths, players = colors.map(Player.apply))
   println("> game start.")
   val result = run(game)
   println("RESULT:")

@@ -1,8 +1,13 @@
 package io.github.nnnnusui.othello
 
 object Othello:
-  def apply(board: Board, players: Seq[Player]) =
-    new Othello(board, LazyList.continually(players).flatten, Option.empty, players)
+  def apply(boardExpandLengths: Coordinates, players: Seq[Player]) =
+    new Othello(
+      Board.initializedFromExpandLength(boardExpandLengths, players.map(_.color)),
+      LazyList.continually(players).flatten,
+      Option.empty,
+      players,
+    )
 
   type Color       = Char
   type Coordinates = Seq[Int]
