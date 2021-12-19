@@ -17,11 +17,14 @@ trait Cli extends App:
       |    ${Othello(Seq(3, 1), Set('W', 'B').map(Player.apply)).toString.indent(4).trim}
       |""".stripMargin)
   val boardExpandLengths = coordinatesFromStdIn()
+
   println("> plz input `colors`. (write some letters on the line)")
   val colors = StdIn.readLine().toCharArray.toSet
-  val game   = Othello(boardExpandLengths, players = colors.map(Player.apply))
+  val game   = Othello(boardExpandLengths, colors.map(Player.apply))
+
   println("> game start.")
   val result = run(game)
+
   println("RESULT:")
   result.counts foreach { (player, value) => println(s"  $player -> DiscCount: $value") }
 
