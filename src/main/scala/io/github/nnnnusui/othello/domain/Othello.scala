@@ -17,7 +17,7 @@ object Othello:
 
 class Othello[Disc] private (
     val board: Board[Disc],
-    val discKindStream: LazyList[Disc],
+    discKindStream: LazyList[Disc],
     discKindStartedThisLapPass: Option[Disc],
     discKinds: Set[Disc],
 ):
