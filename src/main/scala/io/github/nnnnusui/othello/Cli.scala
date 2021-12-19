@@ -1,11 +1,12 @@
 package io.github.nnnnusui.othello
 
+import io.github.nnnnusui.othello.domain.*
+
 import java.util.InputMismatchException
 import scala.annotation.tailrec
 import scala.io.StdIn
 
 trait Cli extends App:
-  import Othello.*
   println("> build othello game.")
   println("> plz input `boardExpandLengths`. (some number line and END line)")
   println(s"""ex)
@@ -13,7 +14,7 @@ trait Cli extends App:
       |    ${Seq("3", "1", "END").mkString("\n").indent(4).trim}
       |  \"\"\"
       |  ->
-      |    ${Board.initializedFromExpandLength(Seq(3, 1), Seq('W', 'B')).toString.indent(4).trim}
+      |    ${Othello(Seq(3, 1), Seq('W', 'B').map(Player.apply)).toString.indent(4).trim}
       |""".stripMargin)
   val boardExpandLengths = coordinatesFromStdIn()
   println("> plz input `colors`. (write some letters on the line)")
