@@ -9,24 +9,24 @@ object Othello:
       players,
     )
 
-class Othello private (
-    val board: Board[Player],
-    val playerTurnStream: LazyList[Player],
-    playerStartedThisLapPass: Option[Player],
-    players: Set[Player],
+class Othello[Disc] private (
+    val board: Board[Disc],
+    val playerTurnStream: LazyList[Disc],
+    playerStartedThisLapPass: Option[Disc],
+    players: Set[Disc],
 ):
-  val player: Player                     = playerTurnStream.head
-  val nextPlayerStream: LazyList[Player] = playerTurnStream.drop(1)
-  lazy val moves: Map[Action, Othello]   = complementPassingMove(dropDiscMoves).toMap
-  lazy val isEnd: Boolean                = moves.keys.toSeq.isEmpty
-  private val passedAround: Boolean      = playerStartedThisLapPass.contains(player)
+  val player: Disc                           = playerTurnStream.head
+  val nextPlayerStream: LazyList[Disc]       = playerTurnStream.drop(1)
+  lazy val moves: Map[Action, Othello[Disc]] = complementPassingMove(dropDiscMoves).toMap
+  lazy val isEnd: Boolean                    = moves.keys.toSeq.isEmpty
+  private val passedAround: Boolean          = playerStartedThisLapPass.contains(player)
 
-  lazy val counts: Map[Player, Int] =
+  lazy val counts: Map[Disc, Int] =
     val grouped =
       board.grouped.map((key, value) => (key, value.length))
     players.map(it => (it, grouped.getOrElse(it, 0))).toMap
 
-  type Move = (Action, Othello)
+  type Move = (Action, Othello[Disc])
   private def complementPassingMove(moves: Seq[Move]): Seq[Move] =
     if moves.nonEmpty then return moves
     if passedAround then return LazyList.empty

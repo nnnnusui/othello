@@ -18,14 +18,14 @@ trait Cli extends App:
       |""".stripMargin)
   val boardExpandLengths = coordinatesFromStdIn()
   println("> plz input `colors`. (write some letters on the line)")
-  val colors        = StdIn.readLine().toCharArray.toSet
-  val game: Othello = Othello(boardExpandLengths, players = colors.map(Player.apply))
+  val colors = StdIn.readLine().toCharArray.toSet
+  val game   = Othello(boardExpandLengths, players = colors.map(Player.apply))
   println("> game start.")
   val result = run(game)
   println("RESULT:")
   result.counts foreach { (player, value) => println(s"  $player -> DiscCount: $value") }
 
-  def run(game: Othello): Othello =
+  def run(game: Othello[Player]): Othello[Player] =
     LazyList
       .continually(true)
       .scanLeft(game) { (game, _) =>
