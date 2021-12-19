@@ -53,7 +53,7 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
     )
   def replaceTargetsOnDrop(disc: Disc, coordinates: Coordinates): Seq[Coordinates] =
     if !isIncluding(coordinates) then return Seq.empty
-    if apply(coordinates).isEmpty then return Seq.empty
+    if apply(coordinates).isDefined then return Seq.empty
     val replaceTargets =
       (
         for direction <- directionList
@@ -64,9 +64,9 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
           ): Seq[Coordinates] =
             if !isIncluding(current) then return Seq.empty
             this.apply(current) match
-              case None             => Seq.empty
-              case it if it == disc => result
-              case _                => scanning(current + direction, result :+ current)
+              case None                   => Seq.empty
+              case Some(it) if it == disc => result
+              case _                      => scanning(current + direction, result :+ current)
           scanning(coordinates + direction, Seq())
       ).flatten
     if replaceTargets.isEmpty then return Seq.empty
