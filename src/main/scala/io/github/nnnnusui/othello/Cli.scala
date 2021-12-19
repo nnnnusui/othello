@@ -7,6 +7,9 @@ import scala.annotation.tailrec
 import scala.io.StdIn
 
 trait Cli extends App:
+  case class Player(color: Char):
+    override def toString: String = color.toString
+
   println("> build othello game.")
   println("> plz input `boardExpandLengths`. (some number line and END line)")
   println(s"""ex)
