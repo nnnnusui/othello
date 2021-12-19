@@ -21,10 +21,10 @@ class Othello[Disc] private (
     discKindStartedThisLapPass: Option[Disc],
     discKinds: Set[Disc],
 ):
-  val discKindOfTheTurn: Disc                = discKindStream.head
-  val nextDiscKindStream: LazyList[Disc]     = discKindStream.drop(1)
-  lazy val moves: Map[Action, Othello[Disc]] = complementPassingMove(dropDiscMoves).toMap
-  lazy val isEnd: Boolean                    = moves.keys.toSeq.isEmpty
+  val discKindOfTheTurn: Disc                    = discKindStream.head
+  lazy val moves: Map[Action, Othello[Disc]]     = complementPassingMove(dropDiscMoves).toMap
+  lazy val isEnd: Boolean                        = moves.keys.toSeq.isEmpty
+  private val nextDiscKindStream: LazyList[Disc] = discKindStream.drop(1)
   private val passedAround: Boolean = discKindStartedThisLapPass.contains(discKindOfTheTurn)
 
   lazy val counts: Map[Disc, Int] =
