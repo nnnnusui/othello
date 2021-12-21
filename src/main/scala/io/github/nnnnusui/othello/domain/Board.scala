@@ -25,8 +25,8 @@ object Board:
       } // initialized board
 
 case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coordinates):
-  val dimension: Int = upperBounds.length
-  val length: Int    = upperBounds.product
+  val dimension: Dimension = upperBounds.dimension
+  val length: Int          = upperBounds.product
   def apply(coordinates: Coordinates): Option[Disc] =
     space.get(coordinates)
   def updated(disc: Disc, coordinates: Coordinates): Board[Disc] =
@@ -44,7 +44,7 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
     if apply(coordinates).isDefined then return Seq.empty
     val replaceTargets =
       (
-        for direction <- directionList
+        for direction <- dimension.directions
         yield
           def scanning(
               current: Coordinates,
@@ -91,7 +91,3 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
   // space's methods
   def isIncluding(coordinates: Coordinates): Boolean =
     upperBounds.zip(coordinates).forall(_ > _)
-  def directionList: Seq[Coordinates] =
-    Coordinates
-      .manyByProduction(Seq.fill(dimension)(Seq(0, 1, -1)))
-      .drop(1) // remove [0, 0, ..., 0]
