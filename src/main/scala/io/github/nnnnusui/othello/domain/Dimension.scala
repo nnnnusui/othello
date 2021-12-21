@@ -9,4 +9,4 @@ object Dimension:
         .manyByProduction(Seq.fill(value)(Seq(0, 1, -1)))
         .drop(1) // remove [0, 0, ..., 0]
 
-opaque type Dimension = Int
+opaque type Dimension <: Int = Int

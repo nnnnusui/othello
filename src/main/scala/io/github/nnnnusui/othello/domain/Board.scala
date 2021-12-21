@@ -7,7 +7,7 @@ object Board:
   ): Board[Disc] =
     val upperBounds = expandLengths.map(_ * 2 + discKinds.size)
     val dimension   = expandLengths.length
-    val empty       = Board[Disc](space = Map.empty, upperBounds)
+    val empty       = Board[Disc](space = Space(Map.empty), upperBounds)
 
     val discStream =
       Seq
@@ -24,14 +24,14 @@ object Board:
         board.updated(disc, coordinates)
       } // initialized board
 
-case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coordinates):
+case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
   val dimension: Dimension = upperBounds.dimension
   val length: Int          = upperBounds.product
   def apply(coordinates: Coordinates): Option[Disc] =
     space.get(coordinates)
-  def updated(disc: Disc, coordinates: Coordinates): Board[Disc] =
+  def updated(disc: Disc, coordinates: Coordinates): Board[Disc] = // TODO
     if !isIncluding(coordinates) then return this
-    copy(space = space.updated(coordinates, disc))
+    copy(space = Space(space.updated(coordinates, disc)))
   def droppedOption(disc: Disc, coordinates: Coordinates): Option[Board[Disc]] =
     val replaceTargets = replaceTargetsOnDrop(disc, coordinates)
     if replaceTargets.isEmpty then return Option.empty
@@ -60,11 +60,7 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
     if replaceTargets.isEmpty then return Seq.empty
     replaceTargets :+ coordinates
 
-  def toSeq: Seq[(Coordinates, Option[Disc])] =
-    Coordinates
-      .manyByProduction(upperBounds.map(Range(0, _)))
-      .map(it => (it, space.get(it)))
-  def grouped: Map[Disc, Iterable[Coordinates]] = space.groupMap(_._2)(_._1)
+  def grouped: Map[Disc, Iterable[Coordinates]] = space.reversed // TODO
 
   override def toString: String =
     val discs = toSeq
@@ -88,6 +84,10 @@ case class Board[Disc] private (space: Map[Coordinates, Disc], upperBounds: Coor
        |  ${colors.mkString("\n").indent(2).trim}
        |)""".stripMargin
 
-  // space's methods
+  // bounded space's methods
   def isIncluding(coordinates: Coordinates): Boolean =
     upperBounds.zip(coordinates).forall(_ > _)
+  def toSeq: Seq[(Coordinates, Option[Disc])] =
+    Coordinates
+      .manyByProduction(upperBounds.map(Range(0, _)))
+      .map(it => (it, space.get(it)))
