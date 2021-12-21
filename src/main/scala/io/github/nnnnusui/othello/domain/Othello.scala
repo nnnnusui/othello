@@ -29,7 +29,7 @@ class Othello[Disc] private (
 
   lazy val counts: Map[Disc, Int] =
     val grouped =
-      board.grouped.map((key, value) => (key, value.size))
+      board.groupedByValue.map((key, value) => (key, value.size))
     discKinds.map(it => (it, grouped.getOrElse(it, 0))).toMap
 
   type Move = (Action, Othello[Disc])
@@ -50,7 +50,7 @@ class Othello[Disc] private (
   private def dropDiscMoves =
     for
       (coordinates, _) <- board.toSeq.to(LazyList)
-      dropped          <- board.droppedOption(discKindOfTheTurn, coordinates)
+      dropped          <- board.droppedOption(coordinates, discKindOfTheTurn)
     yield (
       Action.Drop(coordinates),
       new Othello(

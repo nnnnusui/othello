@@ -21,7 +21,7 @@ object Board:
       .map(_ + expandLengths) // init place coordinates
       .zip(discStream)
       .foldLeft(empty) { case (board, (coordinates, disc)) =>
-        board.updated(disc, coordinates)
+        board.updated(coordinates, disc)
       } // initialized board
 
 case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
@@ -29,38 +29,39 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
   val length: Int          = upperBounds.product
   def apply(coordinates: Coordinates): Option[Disc] =
     space.get(coordinates)
-  def updated(disc: Disc, coordinates: Coordinates): Board[Disc] = // TODO
+  def updated(coordinates: Coordinates, disc: Disc): Board[Disc] =
     if !isIncluding(coordinates) then return this
     copy(space = Space(space.updated(coordinates, disc)))
-  def droppedOption(disc: Disc, coordinates: Coordinates): Option[Board[Disc]] =
-    val replaceTargets = replaceTargetsOnDrop(disc, coordinates)
+  def droppedOption(coordinates: Coordinates, disc: Disc): Option[Board[Disc]] =
+    val replaceTargets = replaceTargetsOnDrop(coordinates, disc)
     if replaceTargets.isEmpty then return Option.empty
     Some(
       replaceTargets
-        .foldLeft(this) { (board, it) => board.updated(disc, it) },
+        .foldLeft(this) { (board, it) => board.updated(it, disc) },
     )
-  def replaceTargetsOnDrop(disc: Disc, coordinates: Coordinates): Seq[Coordinates] =
-    if !isIncluding(coordinates) then return Seq.empty
-    if apply(coordinates).isDefined then return Seq.empty
+  def replaceTargetsOnDrop(origin: Coordinates, discKind: Disc): Seq[Coordinates] =
+    if !isIncluding(origin) then return Seq.empty
+    if apply(origin).isDefined then return Seq.empty
     val replaceTargets =
-      (
-        for direction <- dimension.directions
-        yield
-          def scanning(
-              current: Coordinates,
-              result: Seq[Coordinates],
-          ): Seq[Coordinates] =
-            if !isIncluding(current) then return Seq.empty
-            this.apply(current) match
-              case None                   => Seq.empty
-              case Some(it) if it == disc => result
-              case _                      => scanning(current + direction, result :+ current)
-          scanning(coordinates + direction, Seq())
-      ).flatten
+      dimension.directions.flatMap { direction =>
+        space
+          .lineTrace(origin, direction)
+          .drop(1) // skip origin
+          /* TODO: method化できる？ ->  */
+          .scanLeft((Seq.empty[Coordinates], true)) { case ((stack, _), (coordinates, mayBeDisc)) =>
+            mayBeDisc match
+              case None                       => (Seq.empty, false)     // cancel
+              case Some(it) if it == discKind => (stack.reverse, false) // result
+              case _                          => (coordinates +: stack, true)
+          }
+          .dropWhile(_._2)
+          .head
+          ._1 /* <- */
+      }
     if replaceTargets.isEmpty then return Seq.empty
-    replaceTargets :+ coordinates
+    origin +: replaceTargets
 
-  def grouped: Map[Disc, Iterable[Coordinates]] = space.reversed // TODO
+  def groupedByValue: Map[Disc, Iterable[Coordinates]] = space.groupedByValue
 
   override def toString: String =
     val discs = toSeq
