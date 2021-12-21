@@ -1,5 +1,6 @@
 package io.github.nnnnusui.othello.domain
 
+opaque type Dimension <: Int = Int
 object Dimension:
   def apply(value: Int): Dimension = value
   extension (it: Dimension)
@@ -8,5 +9,3 @@ object Dimension:
       Coordinates
         .manyByProduction(Seq.fill(value)(Seq(0, 1, -1)))
         .drop(1) // remove [0, 0, ..., 0]
-
-opaque type Dimension <: Int = Int

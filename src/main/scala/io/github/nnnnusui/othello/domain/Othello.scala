@@ -63,7 +63,7 @@ class Othello[Disc] private (
 
   override def toString: String =
     val actions =
-      moves.keys.toSeq.zipWithIndex
+      moves.keys.zipWithIndex
         .map((it, index) => s"$index: $it")
         .mkString(",\n")
     s"""${this.getClass.getSimpleName}(
