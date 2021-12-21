@@ -86,7 +86,8 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
 
   // bounded space's methods
   def isIncluding(coordinates: Coordinates): Boolean =
-    upperBounds.zip(coordinates).forall(_ > _)
+    upperBounds.zip(coordinates).forall(_ > _) &&
+      Iterable.empty.zipAll(coordinates, 0, 0).forall(_ <= _)
   def toSeq: Seq[(Coordinates, Option[Disc])] =
     Coordinates
       .manyByProduction(upperBounds.map(Range(0, _)))
