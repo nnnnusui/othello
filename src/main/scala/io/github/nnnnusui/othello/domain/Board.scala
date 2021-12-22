@@ -7,7 +7,7 @@ object Board:
   ): Board[Disc] =
     val upperBounds = expandLengths.map(_ * 2 + discKinds.size)
     val dimension   = expandLengths.dimension
-    val empty       = Board[Disc](space = Space(Map.empty), upperBounds)
+    val empty       = Board[Disc](Space(), upperBounds)
 
     val discStream =
       dimension
@@ -36,7 +36,19 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
     replaceTargetsOnDrop(coordinates, disc) match
       case it if it.isEmpty => Option.empty
       case it               => Some(it.foldLeft(this) { (board, it) => board.updated(it, disc) })
-  def replaceTargetsOnDrop(origin: Coordinates, discKind: Disc): Seq[Coordinates] =
+
+  // bounded space's methods ->
+  def isIncluding(coordinates: Coordinates): Boolean =
+    upperBounds.zip(coordinates).forall(_ > _) &&
+      Iterable.empty.zipAll(coordinates, 0, 0).forall(_ <= _)
+  def iterator: Iterable[(Coordinates, Option[Disc])] =
+    Coordinates
+      .manyByProduction(upperBounds.map(Range(0, _)))
+      .map(it => (it, space.get(it)))
+  // <-
+  def groupedByValue: Map[Disc, Iterable[Coordinates]] = space.groupedByValue
+
+  private def replaceTargetsOnDrop(origin: Coordinates, discKind: Disc): Seq[Coordinates] =
     if !isIncluding(origin) then return Seq.empty
     if apply(origin).isDefined then return Seq.empty
     dimension.directions.flatMap { direction =>
@@ -51,8 +63,6 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
     } match
       case it if it.isEmpty => Seq.empty
       case it               => origin +: it.toSeq
-
-  def groupedByValue: Map[Disc, Iterable[Coordinates]] = space.groupedByValue
 
   override def toString: String =
     val discTexts = iterator.map {
@@ -72,12 +82,3 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
     s"""Board(
        |  ${colors.mkString("\n").indent(2).trim}
        |)""".stripMargin
-
-  // bounded space's methods
-  def isIncluding(coordinates: Coordinates): Boolean =
-    upperBounds.zip(coordinates).forall(_ > _) &&
-      Iterable.empty.zipAll(coordinates, 0, 0).forall(_ <= _)
-  def iterator: Iterable[(Coordinates, Option[Disc])] =
-    Coordinates
-      .manyByProduction(upperBounds.map(Range(0, _)))
-      .map(it => (it, space.get(it)))

@@ -10,56 +10,53 @@ object Othello:
   def apply[Disc](boardExpandLengths: Coordinates, discKinds: Set[Disc]) =
     new Othello(
       Board.initializedFromExpandLength(boardExpandLengths, discKinds),
+      discKinds,
       LazyList.continually(discKinds).flatten,
       Option.empty,
-      discKinds,
     )
 
 class Othello[Disc] private (
     val board: Board[Disc],
+    discKinds: Set[Disc],
     discKindStream: LazyList[Disc],
     discKindStartedThisLapPass: Option[Disc],
-    discKinds: Set[Disc],
 ):
-  val discKindOfTheTurn: Disc                    = discKindStream.head
-  lazy val moves: Map[Action, Othello[Disc]]     = complementPassingMove(dropDiscMoves).toMap
-  lazy val isEnd: Boolean                        = moves.keys.toSeq.isEmpty
-  private val nextDiscKindStream: LazyList[Disc] = discKindStream.drop(1)
-  private val passedAround: Boolean = discKindStartedThisLapPass.contains(discKindOfTheTurn)
-
+  val discKindOfTheTurn: Disc                        = discKindStream.head
+  private lazy val moves: Map[Action, Othello[Disc]] = complementPassingMove(dropDiscMoves).toMap
+  private val nextDiscKindStream: LazyList[Disc]     = discKindStream.drop(1)
+  private val passedAround: Boolean  = discKindStartedThisLapPass.contains(discKindOfTheTurn)
+  lazy val actions: Iterable[Action] = moves.keys
+  lazy val isEnd: Boolean            = moves.keys.toSeq.isEmpty
   lazy val counts: Map[Disc, Int] =
-    val grouped =
-      board.groupedByValue.map((key, value) => (key, value.size))
+    val grouped = board.groupedByValue.map((key, value) => (key, value.size))
     discKinds.map(it => (it, grouped.getOrElse(it, 0))).toMap
+
+  def apply(action: Action): Option[Othello[Disc]] = moves.get(action)
+  def droppedOption(coordinates: Coordinates): Option[Othello[Disc]] =
+    for dropped <- board.droppedOption(coordinates, discKindOfTheTurn)
+    yield updated(board = dropped)
+  def passed: Othello[Disc] = updated(discKindStartedThisLapPass = Some(discKindOfTheTurn))
 
   type Move = (Action, Othello[Disc])
   private def complementPassingMove(moves: Seq[Move]): Seq[Move] =
     if moves.nonEmpty then return moves
     if passedAround then return LazyList.empty
-    LazyList(
-      (
-        Action.Pass,
-        new Othello(
-          board,
-          nextDiscKindStream,
-          Option(discKindStartedThisLapPass.getOrElse(discKindOfTheTurn)),
-          discKinds,
-        ),
-      ),
-    )
+    LazyList(Action.Pass -> passed)
   private def dropDiscMoves =
     for
       (coordinates, _) <- board.iterator.to(LazyList)
-      dropped          <- board.droppedOption(coordinates, discKindOfTheTurn)
-    yield (
-      Action.Drop(coordinates),
-      new Othello(
-        dropped,
-        nextDiscKindStream,
-        Option.empty,
-        discKinds,
-      ),
-    )
+      dropped          <- droppedOption(coordinates)
+    yield Action.Drop(coordinates) -> dropped
+
+  private def updated(
+      board: Board[Disc] = this.board,
+      discKindStartedThisLapPass: Option[Disc] = Option.empty,
+  ) = new Othello(
+    board = board,
+    discKinds = this.discKinds,
+    discKindStream = nextDiscKindStream,
+    discKindStartedThisLapPass = this.discKindStartedThisLapPass.orElse(discKindStartedThisLapPass),
+  )
 
   override def toString: String =
     val actions =

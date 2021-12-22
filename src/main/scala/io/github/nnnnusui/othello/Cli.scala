@@ -36,9 +36,8 @@ trait Cli extends App:
       .continually(true)
       .scanLeft(game) { (game, _) =>
         println(game) // subscribe game state & action
-        val moves  = game.moves
-        val action = actionFromStdIn(moves.keys.toSeq) // post action
-        moves(action)
+        val action = actionFromStdIn(game.actions.toSeq) // post action
+        game(action).getOrElse(game)
       }
       .dropWhile(!_.isEnd)
       .head
