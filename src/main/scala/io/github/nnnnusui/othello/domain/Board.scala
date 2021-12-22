@@ -6,18 +6,18 @@ object Board:
       discKinds: Set[Disc],
   ): Board[Disc] =
     val upperBounds = expandLengths.map(_ * 2 + discKinds.size)
-    val dimension   = expandLengths.length
+    val dimension   = expandLengths.dimension
     val empty       = Board[Disc](space = Space(Map.empty), upperBounds)
 
     val discStream =
-      Seq
-        .fill(dimension)(discKinds.size)
+      dimension
+        .multiply(discKinds.size)
         .scanLeft((1, 1)) { case ((before, _), it) => (before * it, before) }
         .foldLeft(LazyList.continually(discKinds).flatten) { case (stream, (it, before)) =>
           LazyList.continually(stream.sliding(it, before).flatten).flatten
         }
     Coordinates
-      .manyByProduction(Seq.fill(dimension)(Range(0, discKinds.size)))
+      .manyByProduction(dimension.multiply(Range(0, discKinds.size)))
       .map(_ + expandLengths) // init place coordinates
       .zip(discStream)
       .foldLeft(empty) { case (board, (coordinates, disc)) =>
