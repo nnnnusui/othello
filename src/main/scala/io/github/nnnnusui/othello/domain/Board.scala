@@ -41,18 +41,13 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
     if apply(origin).isDefined then return Seq.empty
     dimension.directions.flatMap { direction =>
       space
-        .lineTrace(origin, direction)
-        .drop(1) // skip origin
-        /* TODO: method化できる？ ->  */
-        .scanLeft((Seq.empty[Coordinates], true)) { case ((stack, _), (coordinates, mayBeDisc)) =>
-          mayBeDisc match
-            case None                       => (Seq.empty, false)     // cancel
-            case Some(it) if it == discKind => (stack.reverse, false) // result
-            case _                          => (coordinates +: stack, true)
+        .scanLine(origin, direction)(Seq.empty[Coordinates]) {
+          case (stack, (coordinates, mayBeDisc)) =>
+            mayBeDisc match
+              case None                       => (false, Seq.empty)     // cancel
+              case Some(it) if it == discKind => (false, stack.reverse) // result
+              case _                          => (true, coordinates +: stack)
         }
-        .dropWhile(_._2)
-        .head
-        ._1 /* <- */
     } match
       case it if it.isEmpty => Seq.empty
       case it               => origin +: it.toSeq
