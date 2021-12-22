@@ -41,7 +41,7 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
   def isIncluding(coordinates: Coordinates): Boolean =
     upperBounds.zip(coordinates).forall(_ > _) &&
       Iterable.empty.zipAll(coordinates, 0, 0).forall(_ <= _)
-  def iterator: Iterable[(Coordinates, Option[Disc])] =
+  def iterable: Iterable[(Coordinates, Option[Disc])] =
     Coordinates
       .manyByProduction(upperBounds.map(Range(0, _)))
       .map(it => (it, space.get(it)))
@@ -65,7 +65,7 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
       case it               => origin +: it.toSeq
 
   override def toString: String =
-    val discTexts = iterator.map {
+    val discTexts = iterable.map {
       case (_, Some(value)) => value.toString.head.toString
       case (_, None)        => "_"
     }
