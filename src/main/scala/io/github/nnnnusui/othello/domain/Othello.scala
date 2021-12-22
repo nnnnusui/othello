@@ -49,7 +49,7 @@ class Othello[Disc] private (
     )
   private def dropDiscMoves =
     for
-      (coordinates, _) <- board.toSeq.to(LazyList)
+      (coordinates, _) <- board.iterator.to(LazyList)
       dropped          <- board.droppedOption(coordinates, discKindOfTheTurn)
     yield (
       Action.Drop(coordinates),

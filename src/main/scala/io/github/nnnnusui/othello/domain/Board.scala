@@ -55,12 +55,12 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
         ._1 /* <- */
     } match
       case it if it.isEmpty => Seq.empty
-      case it               => origin +: it
+      case it               => origin +: it.toSeq
 
   def groupedByValue: Map[Disc, Iterable[Coordinates]] = space.groupedByValue
 
   override def toString: String =
-    val discTexts = toSeq.map {
+    val discTexts = iterator.map {
       case (_, Some(value)) => value.toString.head.toString
       case (_, None)        => "_"
     }
@@ -82,7 +82,7 @@ case class Board[Disc] private (space: Space[Disc], upperBounds: Coordinates):
   def isIncluding(coordinates: Coordinates): Boolean =
     upperBounds.zip(coordinates).forall(_ > _) &&
       Iterable.empty.zipAll(coordinates, 0, 0).forall(_ <= _)
-  def toSeq: Seq[(Coordinates, Option[Disc])] =
+  def iterator: Iterable[(Coordinates, Option[Disc])] =
     Coordinates
       .manyByProduction(upperBounds.map(Range(0, _)))
       .map(it => (it, space.get(it)))

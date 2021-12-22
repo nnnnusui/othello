@@ -4,8 +4,10 @@ opaque type Dimension <: Int = Int
 object Dimension:
   def apply(value: Int): Dimension = value
   extension (it: Dimension)
-    def value: Int = it
-    def directions: Seq[Coordinates] =
+    def value: Int                           = it
+    def multiply[A](elem: => A): Iterable[A] = Iterable.fill(value)(elem)
+    def directions: Set[Coordinates] =
       Coordinates
-        .manyByProduction(Seq.fill(value)(Seq(0, 1, -1)))
+        .manyByProduction(multiply(Iterable(0, 1, -1)))
         .drop(1) // remove [0, 0, ..., 0]
+        .toSet

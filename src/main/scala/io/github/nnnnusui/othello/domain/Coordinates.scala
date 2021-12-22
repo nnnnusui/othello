@@ -1,9 +1,9 @@
 package io.github.nnnnusui.othello.domain
 
 object Coordinates:
-  def manyByProduction(source: Seq[Seq[Int]]): Seq[Coordinates] =
+  def manyByProduction(source: Iterable[Iterable[Int]]): Iterable[Coordinates] =
     source
-      .foldRight(Seq(Seq.empty[Int])) { (it, highers) =>
+      .foldRight(Iterable(Seq.empty[Int])) { (it, highers) =>
         for
           higherAxis <- highers
           current <- it // The lower axis has higher iteration priority
